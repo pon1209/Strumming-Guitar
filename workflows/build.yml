@@ -1,0 +1,40 @@
+name: Compilar Mac Intel
+on: [workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Descargar motor original
+        run: |
+          git clone --depth 1 https://github.com/Klangio/guitar-strumming-transcription.git upstream
+          git -C upstream lfs pull
+          cp upstream/checkpoints/wc/step=19000-f1=0.8225.ckpt checkpoint.ckpt
+          cp upstream/LICENSE KLANGIO-LICENSE.txt
+      - name: Preparar dependencias Intel
+        run: |
+          printf 'numpy<2\ntorch==2.2.2\nlightning<2.6\n' > constraints.txt
+          python -m pip install -c constraints.txt -r upstream/requirements.txt pyinstaller pywebview
+          npm install --no-audit --no-fund
+          npm run build
+          npm test
+      - name: Validar modelo real antes de empaquetar
+        run: PYTHONPATH="$PWD/upstream" python native.py --self-test upstream/dataset/klangio-gst-mm-2025/recording_1009_phone.wav
+      - name: Empaquetar app con Python incluido
+        run: |
+          pyinstaller --noconfirm --windowed --onedir --name 'Strumming Studio' --target-architecture x86_64 --paths upstream --collect-all klangio --collect-all librosa --collect-all torchlibrosa --collect-all lightning --collect-all numba --collect-all llvmlite --collect-all note_seq --add-data 'checkpoint.ckpt:.' --add-data 'KLANGIO-LICENSE.txt:.' --add-data 'index.html:.' --add-data 'finger.js:.' --add-data 'score.js:.' --add-data 'fusion.js:.' --add-data 'pitch.bundle.js:.' --add-data 'model:model' native.py
+          'dist/Strumming Studio.app/Contents/MacOS/Strumming Studio' --self-test upstream/dataset/klangio-gst-mm-2025/recording_1009_phone.wav
+          hdiutil create -volname 'Strumming Studio' -srcfolder 'dist/Strumming Studio.app' -ov -format UDZO Strumming_Studio_Intel.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Strumming-Studio-Intel
+          path: Strumming_Studio_Intel.dmg
