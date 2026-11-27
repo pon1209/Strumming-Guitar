@@ -1,0 +1,7 @@
+Strumming Studio 9 · proyecto experimental de compilación Mac Intel
+No es un DMG compilado. Python 3.11 y Node se instalan en el runner de GitHub, no en tu Mac. El .app generado contiene Python y los modelos. Usa una ventana Cocoa/WebKit mediante pywebview y un servidor loopback interno que se cierra con la ventana. No es SwiftUI.
+1. Crea un repositorio privado GitHub. Sube el contenido de esta carpeta, incluida .github/workflows/build.yml (archivo oculto; usa el editor web para crearlo si no aparece).
+2. Actions > Compilar Mac Intel > Run workflow. El runner macos-15-intel puede consumir minutos de tu plan.
+3. Si todas las etapas pasan, descarga el artifact Strumming-Studio-Intel y descomprime el DMG. App sin notarizar; verifica el origen antes de abrirla.
+La compilación falla deliberadamente si Klangio no detecta eventos en la muestra oficial, incluso después de empaquetar. No se garantiza precisión con mezclas comerciales. No hay separación automática. Basic Pitch sigue siendo secundario y TabCNN está desactivado. Capo y digitación son sugerencias. Si falla Actions comparte el log de la etapa roja. No se ha ejecutado la compilación en macOS desde este entorno.
+Klangio: https://github.com/Klangio/guitar-strumming-transcription (Apache-2.0, código de investigación). Revisar derechos de redistribución de los pesos y dependencias antes de distribuir públicamente.
